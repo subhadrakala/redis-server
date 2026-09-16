@@ -33,7 +33,8 @@ const server = net.createServer((socket) => {
       }
       socket.write(fullResponse);
     } catch (error) {
-      console.error("Error parsing RESP:", error);
+      console.error("Error processing client request:", error);
+      socket.write("-ERR protocol error\r\n");
     }
   });
 

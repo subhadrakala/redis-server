@@ -7,7 +7,7 @@ test("executeCommand PING and ECHO", () => {
     const store = new Store();
     assert.strictEqual(executeCommand(store, "PING", []), "+PONG\r\n");
     assert.strictEqual(executeCommand(store, "ECHO", ["hello"]), "$5\r\nhello\r\n");
-    assert.strictEqual(executeCommand(store, "ECHO", []), "-Empty argument for echo\r\n");
+    assert.strictEqual(executeCommand(store, "ECHO", []), "-ERR wrong number of arguments for 'echo' command\r\n");
 });
 
 test("executeCommand SET and GET", () => {
@@ -25,7 +25,7 @@ test("executeCommand EXISTS", () => {
     assert.strictEqual(executeCommand(store, "EXISTS", ["k1"]), ":1\r\n");
     assert.strictEqual(executeCommand(store, "EXISTS", ["k1", "k2", "k3"]), ":2\r\n");
     assert.strictEqual(executeCommand(store, "EXISTS", ["k3"]), ":0\r\n");
-    assert.strictEqual(executeCommand(store, "EXISTS", []), "-Not enough arguments for exists\r\n");
+    assert.strictEqual(executeCommand(store, "EXISTS", []), "-ERR wrong number of arguments for 'exists' command\r\n");
 });
 
 test("executeCommand DEL", () => {
@@ -36,7 +36,7 @@ test("executeCommand DEL", () => {
     assert.strictEqual(executeCommand(store, "DEL", ["k1", "k3"]), ":1\r\n");
     assert.strictEqual(executeCommand(store, "EXISTS", ["k1"]), ":0\r\n");
     assert.strictEqual(executeCommand(store, "EXISTS", ["k2"]), ":1\r\n");
-    assert.strictEqual(executeCommand(store, "DEL", []), "-Not enough arguments for del\r\n");
+    assert.strictEqual(executeCommand(store, "DEL", []), "-ERR wrong number of arguments for 'del' command\r\n");
 });
 
 test("executeCommand INCR and DECR", () => {
@@ -48,7 +48,7 @@ test("executeCommand INCR and DECR", () => {
     assert.strictEqual(executeCommand(store, "DECR", ["counter"]), ":-1\r\n");
 
     executeCommand(store, "SET", ["name", "alice"]);
-    assert.strictEqual(executeCommand(store, "INCR", ["name"]), "-Value is not an integer\r\n");
+    assert.strictEqual(executeCommand(store, "INCR", ["name"]), "-ERR value is not an integer or out of range\r\n");
 });
 
 test("executeCommand LPUSH and RPUSH", () => {
