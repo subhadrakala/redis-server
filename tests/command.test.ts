@@ -71,4 +71,11 @@ test("executeCommand LPUSH and RPUSH", () => {
     );
 });
 
+test("executeCommand SAVE", () => {
+    const store = new Store();
+    executeCommand(store, "SET", ["saved_key", "saved_value"]);
+    assert.strictEqual(executeCommand(store, "SAVE", []), "+OK\r\n");
+});
+
+
 

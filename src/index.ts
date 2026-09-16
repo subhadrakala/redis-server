@@ -6,6 +6,8 @@ import { store } from "./store.js";
 const PORT = Number(process.env.PORT) || 6379;
 const HOST = process.env.HOST || "127.0.0.1";
 
+store.load();
+
 const server = net.createServer((socket) => {
   console.log(`Client connected: ${socket.remoteAddress}:${socket.remotePort}`);
 

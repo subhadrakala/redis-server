@@ -1,3 +1,5 @@
+import * as fs from 'node:fs';
+
 export interface KeyValue {
   value: string | string[];
   expiresAt?: number;
@@ -68,6 +70,28 @@ export class Store {
 
         entry.value.push(...values);
         return entry.value.length;
+    }
+
+    save(): void {
+      for (const [key,value] of this.data.entries()){
+        if (!value.expiresAt || value.expiresAt > Date.now()){
+            continue;
+        }
+        else {
+            this.data.delete(key);
+        }
+      }
+      const dataForFile = JSON.stringify(Array.from(this.data.entries()), null, 2)
+      fs.writeFileSync("dump.json.tmp", dataForFile);
+      fs.renameSync("dump.json.tmp", "dump.json")
+
+    }
+
+    load(): void {
+      if (fs.existsSync("dump.json")) {
+        const data = JSON.parse(fs.readFileSync("dump.json", 'utf8'));
+        this.data = new Map(data);
+      }
     }
   
 }

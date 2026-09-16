@@ -5,3 +5,4 @@ dist/
 .env
 .env.*
 package-lock.json
+dump.json*

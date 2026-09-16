@@ -152,8 +152,13 @@ export function executeCommand(store: Store, command: string, args: string[]): s
             }
           }
           break;
+        case "SAVE":
+          store.save(); 
+          response = encodeSimpleString("OK");
+          break;
         default:
-            response = encodeError("Unknown command");
-        }
-        return response;
+          response = encodeError("Unknown command");
+          break;
+    }
+    return response;
 }
