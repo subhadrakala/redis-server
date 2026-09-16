@@ -38,3 +38,37 @@ test("executeCommand DEL", () => {
     assert.strictEqual(executeCommand(store, "EXISTS", ["k2"]), ":1\r\n");
     assert.strictEqual(executeCommand(store, "DEL", []), "-Not enough arguments for del\r\n");
 });
+
+test("executeCommand INCR and DECR", () => {
+    const store = new Store();
+    assert.strictEqual(executeCommand(store, "INCR", ["counter"]), ":1\r\n");
+    assert.strictEqual(executeCommand(store, "INCR", ["counter"]), ":2\r\n");
+    assert.strictEqual(executeCommand(store, "DECR", ["counter"]), ":1\r\n");
+    assert.strictEqual(executeCommand(store, "DECR", ["counter"]), ":0\r\n");
+    assert.strictEqual(executeCommand(store, "DECR", ["counter"]), ":-1\r\n");
+
+    executeCommand(store, "SET", ["name", "alice"]);
+    assert.strictEqual(executeCommand(store, "INCR", ["name"]), "-Value is not an integer\r\n");
+});
+
+test("executeCommand LPUSH and RPUSH", () => {
+    const store = new Store();
+    // LPUSH
+    assert.strictEqual(executeCommand(store, "LPUSH", ["fruits", "apple"]), ":1\r\n");
+    assert.strictEqual(executeCommand(store, "LPUSH", ["fruits", "banana", "cherry"]), ":3\r\n");
+    // List order: cherry, banana, apple
+    assert.deepEqual(store.get("fruits"), ["cherry", "banana", "apple"]);
+
+    // RPUSH
+    assert.strictEqual(executeCommand(store, "RPUSH", ["fruits", "date"]), ":4\r\n");
+    assert.deepEqual(store.get("fruits"), ["cherry", "banana", "apple", "date"]);
+
+    // WRONGTYPE test
+    executeCommand(store, "SET", ["string_key", "hello"]);
+    assert.strictEqual(
+        executeCommand(store, "LPUSH", ["string_key", "world"]),
+        "-WRONGTYPE Operation against a key holding the wrong kind of value\r\n"
+    );
+});
+
+

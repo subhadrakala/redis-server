@@ -55,8 +55,9 @@ export function executeCommand(store: Store, command: string, args: string[]): s
               const value = store.get(String(args[0]));
               if (value === null) {
                 response = encodeBulkString(null);
-              }
-              else {
+              } else if (typeof value !== "string") {
+                response = encodeError("WRONGTYPE Operation against a key holding the wrong kind of value");
+              } else {
                 response = encodeBulkString(value);
               }
             }
@@ -87,6 +88,70 @@ export function executeCommand(store: Store, command: string, args: string[]): s
               response = encodeInteger(count);
             }
             break;
+          case 'INCR':
+            if (args.length < 1) {
+              response = encodeError("Not enough arguments for incr");
+            } else {
+              const value = store.get(String(args[0]));
+              if (value === null) {
+                store.set(String(args[0]), "1");
+                response = encodeInteger(1);
+              } else if (typeof value === "string" && /^-?\d+$/.test(value)) {
+                const incrementedValue = Number(value) + 1;
+                store.set(String(args[0]), String(incrementedValue));
+                response = encodeInteger(incrementedValue);
+              }
+              else {
+                response = encodeError("Value is not an integer");
+              }
+            }
+            break;
+          case "DECR":
+            if (args.length < 1) {
+              response = encodeError("Not enough arguments for decr");
+            } else {
+              const value = store.get(String(args[0]));
+              if (value === null) {
+                store.set(String(args[0]), "-1");
+                response = encodeInteger(-1);
+              } else if (typeof value === "string" && /^-?\d+$/.test(value)) {
+                const decrementedValue = Number(value) - 1;
+                store.set(String(args[0]), String(decrementedValue));
+                response = encodeInteger(decrementedValue);
+              }
+              else {
+                response = encodeError("Value is not an integer");
+              }
+            }
+            break;
+        case 'LPUSH':
+          if (args.length < 2) {
+            response = encodeError("Not enough arguments for lpush");
+          } else {
+            const key = String(args[0]);
+            const values = args.slice(1).map(String);
+            const length = store.lpush(key, values);
+            if (length === null) {
+              response = encodeError("WRONGTYPE Operation against a key holding the wrong kind of value");
+            } else {
+              response = encodeInteger(length);
+            }
+          }
+          break;
+        case 'RPUSH':
+          if (args.length < 2) {
+            response = encodeError("Not enough arguments for rpush");
+          } else {
+            const key = String(args[0]);
+            const values = args.slice(1).map(String);
+            const length = store.rpush(key, values);
+            if (length === null) {
+              response = encodeError("WRONGTYPE Operation against a key holding the wrong kind of value");
+            } else {
+              response = encodeInteger(length);
+            }
+          }
+          break;
         default:
             response = encodeError("Unknown command");
         }
