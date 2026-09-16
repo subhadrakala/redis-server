@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { parseRESP, encodeSimpleString, encodeError, encodeInteger, encodeBulkString, encodeRESP } from "./parser.js";
+import { parseRESP, encodeSimpleString, encodeError, encodeInteger, encodeBulkString, encodeRESP } from "../src/parser";
 
 // ─── Deserialiser Tests ───────────────────────────────────────────────────────
 
