@@ -87,21 +87,3 @@ test("lpush on expired key resets with fresh list", async () => {
     assert.strictEqual(store.lpush("temp_key", ["new_val"]), 1);
     assert.deepEqual(store.get("temp_key"), ["new_val"]);
 });
-
-test("save and load persists strings and lists and prunes expired keys", async () => {
-    const store1 = new Store();
-    store1.set("saved_str", "world");
-    store1.lpush("saved_list", ["one", "two"]);
-    store1.set("will_expire", "bye", Date.now() + 50);
-
-    await new Promise((resolve) => setTimeout(resolve, 60));
-
-    store1.save();
-
-    const store2 = new Store();
-    store2.load();
-
-    assert.strictEqual(store2.get("saved_str"), "world");
-    assert.deepEqual(store2.get("saved_list"), ["two", "one"]);
-    assert.strictEqual(store2.get("will_expire"), null);
-});

@@ -11,16 +11,26 @@ store.load();
 const server = net.createServer((socket) => {
   console.log(`Client connected: ${socket.remoteAddress}:${socket.remotePort}`);
 
-  socket.on("data", (data) => {
+  let buffer = "";
 
+  socket.on("data", (data) => {
+    buffer += data.toString();
     let offset = 0;
     let fullResponse = "";
-    let dataString = data.toString();
+
     try {
-      while (offset < dataString.length) {
-        let responseMessage = parseRESP(dataString, offset);
+      while (offset < buffer.length) {
+        let responseMessage;
+        try {
+          responseMessage = parseRESP(buffer, offset);
+        } catch {
+          // Incomplete frame in buffer, wait for more data
+          break;
+        }
+
         if (!Array.isArray(responseMessage.value) || responseMessage.value.length === 0) {
-          return;
+          offset = responseMessage.next;
+          continue;
         }
 
         const command = String(responseMessage.value[0]).toUpperCase();
@@ -31,9 +41,16 @@ const server = net.createServer((socket) => {
         fullResponse += response;
         offset = responseMessage.next;
       }
-      socket.write(fullResponse);
+
+      // Slice off fully consumed commands, keep remaining partial frame in buffer
+      buffer = buffer.substring(offset);
+
+      if (fullResponse.length > 0) {
+        socket.write(fullResponse);
+      }
     } catch (error) {
       console.error("Error processing client request:", error);
+      buffer = "";
       socket.write("-ERR protocol error\r\n");
     }
   });

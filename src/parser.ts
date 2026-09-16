@@ -54,7 +54,7 @@ export function encodeError(message: string): string {
     return `-${message}\r\n`;
 }
 
-export function encodeInteger(value: number): string {
+export function encodeInteger(value: number | bigint | string): string {
     return `:${value}\r\n`;
 }
 

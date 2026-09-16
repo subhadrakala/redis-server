@@ -77,5 +77,29 @@ test("executeCommand SAVE", () => {
     assert.strictEqual(executeCommand(store, "SAVE", []), "+OK\r\n");
 });
 
+test("executeCommand SET options and validation", () => {
+    const store = new Store();
+    assert.strictEqual(executeCommand(store, "SET", ["k"]), "-ERR wrong number of arguments for 'set' command\r\n");
+    assert.strictEqual(executeCommand(store, "SET", ["k", "v", "EX"]), "-ERR syntax error\r\n");
+    assert.strictEqual(executeCommand(store, "SET", ["k", "v", "EX", "invalid"]), "-ERR value is not an integer or out of range\r\n");
+    assert.strictEqual(executeCommand(store, "SET", ["k", "v", "EX", "-5"]), "-ERR value is not an integer or out of range\r\n");
+    assert.strictEqual(executeCommand(store, "SET", ["k", "v", "UNKNOWN", "10"]), "-ERR syntax error\r\n");
+    assert.strictEqual(executeCommand(store, "SET", ["k", "v", "EX", "100"]), "+OK\r\n");
+});
+
+test("executeCommand INCR on list returns WRONGTYPE and supports 64-bit BigInt", () => {
+    const store = new Store();
+    executeCommand(store, "LPUSH", ["mylist", "item1"]);
+    assert.strictEqual(
+        executeCommand(store, "INCR", ["mylist"]),
+        "-WRONGTYPE Operation against a key holding the wrong kind of value\r\n"
+    );
+
+    // Large 64-bit integer test
+    executeCommand(store, "SET", ["big", "9007199254740992"]);
+    assert.strictEqual(executeCommand(store, "INCR", ["big"]), ":9007199254740993\r\n");
+});
+
+
 
 

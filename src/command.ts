@@ -43,37 +43,39 @@ function handleEcho(store: Store, args: string[]): string {
 
 function handleSet(store: Store, args: string[]): string {
     if (args.length < 2) {
-        return encodeError("Not enough arguments for set");
+        return encodeError("ERR wrong number of arguments for 'set' command");
     }
-    else if (args.length >= 3) {
-        const [key, value, option, expiryValue] = args;
-        if (String(option).toUpperCase() === "EX") {
-            const expiry = Date.now() + (Number(expiryValue) * 1000);
-            store.set(String(key), String(value), expiry);
-            return encodeSimpleString("OK");
-        } else if (String(option).toUpperCase() === "PX") {
-            const expiry = Date.now() + (Number(expiryValue));
-            store.set(String(key), String(value), expiry);
-            return encodeSimpleString("OK");
-        }
-        else if (String(option).toUpperCase() === "EXAT") {
-            const expiry = Number(expiryValue) * 1000;
-            store.set(String(key), String(value), expiry);
-            return encodeSimpleString("OK");
-        }
-        else if (String(option).toUpperCase() === "PXAT") {
-            const expiry = Number(expiryValue);
-            store.set(String(key), String(value), expiry);
-            return encodeSimpleString("OK");
-        }
-        else {
+    if (args.length >= 3) {
+        if (args.length < 4) {
             return encodeError("ERR syntax error");
         }
-    }
-    else {
-        store.set(String(args[0]), String(args[1]));
+        const [key, value, option, expiryValue] = args;
+        const opt = String(option).toUpperCase();
+        const num = Number(expiryValue);
+
+        if (!Number.isInteger(num) || num <= 0) {
+            return encodeError("ERR value is not an integer or out of range");
+        }
+
+        let expiry: number;
+        if (opt === "EX") {
+            expiry = Date.now() + num * 1000;
+        } else if (opt === "PX") {
+            expiry = Date.now() + num;
+        } else if (opt === "EXAT") {
+            expiry = num * 1000;
+        } else if (opt === "PXAT") {
+            expiry = num;
+        } else {
+            return encodeError("ERR syntax error");
+        }
+
+        store.set(String(key), String(value), expiry);
         return encodeSimpleString("OK");
     }
+
+    store.set(String(args[0]), String(args[1]));
+    return encodeSimpleString("OK");
 }
 
 function handleGet(store: Store, args: string[]): string {
@@ -127,25 +129,34 @@ function incrementBy(store: Store, args: string[], delta: number): string {
     if (args.length < 1) {
         if (delta === 1) {
             return encodeError("ERR wrong number of arguments for 'incr' command");
-        }else {
+        } else {
             return encodeError("ERR wrong number of arguments for 'decr' command");
         }
-        
-    } else {
-        const value = store.get(String(args[0]));
-        if (value === null) {
-            store.set(String(args[0]), String(delta));
-            return encodeInteger(delta);
-        } else if (typeof value === "string" && /^-?\d+$/.test(value)) {
-            const incrementedValue = Number(value) + delta;
-            store.set(String(args[0]), String(incrementedValue));
+    }
+
+    const key = String(args[0]);
+    const value = store.get(key);
+
+    if (value === null) {
+        store.set(key, String(delta));
+        return encodeInteger(delta);
+    }
+
+    if (Array.isArray(value)) {
+        return encodeError("WRONGTYPE Operation against a key holding the wrong kind of value");
+    }
+
+    if (typeof value === "string" && /^-?\d+$/.test(value)) {
+        try {
+            const incrementedValue = BigInt(value) + BigInt(delta);
+            store.set(key, incrementedValue.toString());
             return encodeInteger(incrementedValue);
-        }
-        else {
+        } catch {
             return encodeError("ERR value is not an integer or out of range");
         }
     }
-    
+
+    return encodeError("ERR value is not an integer or out of range");
 }
 
 
